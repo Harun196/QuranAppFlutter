@@ -1,0 +1,1126 @@
+﻿<!-- Coding by CodingLab | www.codinglabweb.com dir="rtl" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!----======== CSS ======== -->
+    <link rel="stylesheet" href="./css/style.css" />
+    <style>
+        .form-group {
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+
+        @font-face {
+            font-family: 'uthmanichafs';
+            src: url('css/uthmanichafs.ttf') format('truetype');
+        }
+
+        @font-face {
+            font-family: 'AlMuslimeenaBengali';
+            src: url('css/AlMuslimeenaBengali.woff') format('woff');
+        }
+
+        @font-face {
+            font-family: 'boxicons';
+            src: url('css/boxicons.ttf') format('truetype');
+        }
+
+        @font-face {
+            font-family: 'boxicons';
+            src: url('css/boxicons.woff') format('woff');
+        }
+
+        @font-face {
+            font-family: 'boxicons';
+            src: url('css/boxicons.woff2') format('woff2');
+        }
+    </style>
+    <!----===== Boxicons CSS ===== -->
+    <!-- <link href="https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css" rel="stylesheet" />-->
+    <title>Quran Real Translation</title>
+    <link href="css/boxicons.min.css" rel="stylesheet" />
+    <link href="css/bootstrap.min.css" rel="stylesheet" />
+    <script src="js/jquery-3.6.1.min.js"></script>
+    <link href="css/jquery-ui.css" rel="stylesheet" />
+    <script src="js/jquery-ui.js"></script>
+    <script src="js/boxicons.js"></script>
+    <script src="js/responsivevoice.js"></script>
+    <script src="js/jquery.dataTables.min.js"></script>
+    <script src="js/dataTables.scroller.min.js"></script>
+    <script type="text/javascript" src="js/data.js"></script>
+
+    <script>
+
+        $(document).ready(function () {
+            CloseAllPage();
+            LoadLanguge();
+            LoadSurahs();
+            LoadRecentSurahs();
+            LoadMenuSurahs();
+            LoadTranslators();
+            var table = $('#menuSurah').DataTable();
+            $('#menuSurah tbody').on('click', 'tr', function () {
+                //console.log(table.row(this).data());
+                var d = table.row(this).data()[0];
+                // console.log(d);
+                LoadAyat(d);
+            });
+            LoadAutoCompleteData();
+            localStorage.setItem("BackPage", "");
+        });
+        $(document).on({
+            mouseenter: function (e) {
+                var target = $(e.target);
+                var langId = localStorage.getItem("SurahLanguage");
+                var data = target.data("l" + langId + "wt");
+                target.attr('title', data);
+                //console.log('mouseover  ' + data + 'la-' + langId);
+                //console.log('mouseover  ' + JSON.stringify(target.html()));
+            },
+            mouseleave: function () {
+                //stuff to do on mouse leave
+            }
+            //,
+            //change: function () {
+            //    $(".arabic_sentence").style.fontFamily = "AlMuslimeenaBengali";
+            //}
+        }, ".arabic_sentence");
+
+        function LoadMenuSurahs() {
+            var d = JSON.parse(localStorage.getItem("AllSurahs"));
+            var data = [];
+            //Id,SurahNameEng,SurahNameEngTn,SurahNameBn,SurahNameArabic,CodeNo,TotalAyat,AudioName,SlNo,JuzNo,PageNo
+            $.each(d, function (i) {
+                var item = [d[i].SlNo, d[i].SurahNameEng];
+                data.push(item);
+            });
+            //scrollCollapse: true,
+            //    scroller: true,
+            $('#menuSurah').DataTable({
+                data: data,
+                deferRender: true,
+                scrollY: 300,
+
+                "bInfo": false, //Dont display info e.g. "Showing 1 to 4 of 4 entries"
+                "paging": false,//Dont want paging
+                "bPaginate": false,//Dont want paging
+            });
+        }
+        function ClearSearch() {
+            $('#txtSearch').val('');
+        }
+        function LoadAutoCompleteData() {
+            $("#txtSearch").autocomplete({
+                source: function (request, response) {
+
+                    var d = [];
+                    $.each(suName, function (i) {
+                        if (suName[i].label.toString().includes(request.term)) {
+                            var item = {
+                                label: suName[i].label,
+                                value: suName[i].label,
+                                ItemInfo: suName[i].des
+                            };
+                            d.push(item);
+                        }
+                    });
+
+                    $.each(allAyatdata, function (i) {
+                        if (JSON.stringify(allAyatdata[i]).toString().includes(request.term)) {
+                            var t = allAyatdata[i].Translate;
+
+                            $.each(t, function (ii) {
+                                if (t[ii].Translations.toString().includes(request.term)) {
+                                    var item = {
+                                        label: allAyatdata[i].AyatCode + " - " + t[ii].Translations,
+                                        value: allAyatdata[i].AyatCode + " - " + t[ii].Translations,
+                                        ItemInfo: allAyatdata[i].AyatCode + "*Ayat"
+                                    };
+                                    d.push(item);
+                                }
+                            });
+                            if (allAyatdata[i].Ayat.toString().includes(request.term)) {
+                                var item = {
+                                    label: allAyatdata[i].AyatCode + " - " + allAyatdata[i].Ayat,
+                                    value: allAyatdata[i].AyatCode + " - " + allAyatdata[i].Ayat,
+                                    ItemInfo: allAyatdata[i].AyatCode + "*Ayat"
+                                };
+                                d.push(item);
+                            }
+                            if (allAyatdata[i].AyatCode.toString().includes(request.term)) {
+                                var item = {
+                                    label: allAyatdata[i].AyatCode + " - " + allAyatdata[i].Ayat,
+                                    value: allAyatdata[i].AyatCode + " - " + allAyatdata[i].Ayat,
+                                    ItemInfo: allAyatdata[i].AyatCode + "*Ayat"
+                                };
+                                d.push(item);
+                            }
+                        }
+                    });
+                    // console.log('autocomplete result2 ' + JSON.stringify(d));
+                    response($.map(d, function (value, key) {
+                        return {
+                            label: value.label,
+                            value: value.value,
+                            ItemInfo: value.ItemInfo
+                        }
+                    }));
+                },
+
+                select: showResult,
+                minLength: 2
+                //focus: showResult,
+                //change: showResult
+                // focus: function (event, ui) {
+                //     $('#txtSearch').val(ui.item.SurahNameEng);
+                //    return false;
+                //},
+            })
+                .data("ui-autocomplete")._renderItem = function (ul, item) {
+                    return $("<li>")
+                        .append("<a style='text-decoration: none;'>" + item.label.replace($('#txtSearch').val(), "<span style='background-color: #FFF033; font - weight: bold'>" + $('#txtSearch').val() + "</span>") + "</a>")
+                        .appendTo(ul);
+                };;
+        }
+
+        function showResult(event, ui) {
+            $(".details_box").css("display", "none");
+            var val = ui.item.ItemInfo;
+            if (val.split('*')[1] == "Surah") {
+                LoadAyat(val.split('*')[0]);
+            }
+            if (val.split('*')[1] == "Ayat") {
+
+                var ayatVal = val.split('*')[0];
+
+                CloseAllPage();
+                //LoadAyatSurahName(ayatVal.split(':')[0]);
+                localStorage.setItem("BackPage", "quran*Surah*" + ayatVal.split(':')[0]);
+                $("#divAyat").css("display", "block");
+                $("#divAyatBasmala").css("display", "none");
+                $("#lbAyatSurahName").html('Search Result');
+
+                //var html = "  <div class='details_box' id='divIndAyat" + ayatVal.replace(':', '_') + "' name='divIndAyat" + ayatVal.replace(':', '_') + "'></div>";
+
+                //$("#divAyatDetails").html(html);
+                // console.log("LoadAyatByCode----"+ayatVal.replace(':', '_'));
+                LoadAyatByCode(ayatVal);
+
+            }
+            // console.log(ui.item.label + ' showResult ' + JSON.stringify(ui.item));
+        }
+        function Speak(val) {
+            responsiveVoice.speak(val, 'Bangla Bangladesh Male');
+        }
+        function CloseAllPage() {
+
+            $("#divRecent").css("display", "none");
+            $("#divSurah").css("display", "none");
+            $("#divAyat").css("display", "none");
+        }
+        function LoadLanguge() {
+            var d = [];
+            if (localStorage.getItem("AllLanguage") != null) {
+                d = JSON.parse(localStorage.getItem("AllLanguage"));
+                LoadLangugeBtn(d);
+            } else {
+
+                var d = [{ "Id": 1, "Language": "Bangla" }, { "Id": 2, "Language": "English" }];
+                localStorage.setItem("AllLanguage", JSON.stringify(d));
+                localStorage.setItem("SurahLanguage", "1");
+                LoadLangugeBtn(d);
+
+            }
+
+            // console.log('AllLanguage  ' + JSON.stringify(d));
+        }
+        function LoadLangugeBtn(d) {
+            var html = "";
+            $.each(d, function (i) {
+                html += "<button id='btnLanguage" + d[i].Id + "' onclick='ChangeLanguage(" + d[i].Id + ")' style='";
+                if (localStorage.getItem("SurahLanguage") == d[i].Id) {
+                    html += "background-color: #FFF033;";
+                } else {
+                    html += "background-color: #DFCF05;";
+                }
+                html += "'>" + d[i].Language + "</button>";
+            })
+            $("#divChkLanguage").html(html);
+
+        }
+        function ChangeLanguage(lId) {
+            localStorage.setItem("SurahLanguage", lId);
+            // $("#divSurah").css("display", "block");
+            if ($('#divSurah').css('display') == 'block') {
+                LoadSurahs();
+
+                $('.tsn').each(function () {
+                    var data = $(this).data("l" + lId + "sn");
+                    // console.log('data---' + data);
+                    if (data != null) {
+                        if (data.toString().length > 0)
+                            $(this).html(data + "&nbsp; ");
+                    } else {
+                        $(this).html(' ');
+                    }
+                });
+
+                $('.tst').each(function () {
+                    var data = $(this).data("l" + lId + "st");
+                    // console.log('data---' + data);
+                    if (data != null) {
+                        if (data.toString().length > 0)
+                            $(this).html(data + "&nbsp; ");
+                    } else {
+                        $(this).html(' ');
+                    }
+                });
+
+            } else {
+                ChangeWordByWord();
+            }
+            LoadLangugeBtn(JSON.parse(localStorage.getItem("AllLanguage")));
+
+        }
+        function LoadRecentSurahs() {
+            return;
+            if (localStorage.getItem("RecentSurahs") != null) {
+                var d = JSON.parse(localStorage.getItem("RecentSurahs"));
+                var html = "";
+                $.each(d, function (i) {
+                    html += "<div class='col-lg-3'  onclick='LoadAyat(\"" + d[i].CodeNo + "\")'>\
+                                                                                                    <div class='read_box' >\
+                                                                                                        <div class='d-flex justify-content-between'>\
+                                                                                                            <h6 class='dark_text_color_two'>" + d[i].SurahNameEngTn + "</h6>\
+                                                                                                            <h5 class='dark_text_color_two'>" + d[i].CodeNo + "</h5>\
+                                                                                                        </div>\
+                                                                                                        <h5 class='dark_text_color'>\
+                                                                                                            Surah <br />\
+                                                                                                            " + d[i].SurahNameEng + "\
+                                                                                                        </h5>\
+                                                                                                        <div class='ayah'>\
+                                                                                                            <div class='surah_name'>" + d[i].SurahNameArabic + "</div>\
+                                                                                                            <p>Ayah " + d[i].TotalAyat + "</p>\
+                                                                                                        </div>\
+                                                                                                    </div >\
+                                                                                                </div >";
+                });
+                if (html.length > 0) {
+                    $("#divRecent").css("display", "block");
+                    $("#divRecentDetails").html(html);
+                }
+            }
+        }
+        function SetRecentSurahs(code) {
+            if (localStorage.getItem("RecentSurahs") === null) {
+                var dd = [];
+                var d = JSON.parse(localStorage.getItem("AllSurahs"));
+                $.each(d, function (i) {
+                    if (d[i].CodeNo == code) {
+                        dd.push(d[i]);
+                    }
+                });
+                localStorage.setItem("RecentSurahs", JSON.stringify(dd));
+            } else {
+                var dd = JSON.parse(localStorage.getItem("RecentSurahs"));
+                var d = JSON.parse(localStorage.getItem("AllSurahs"));
+                $.each(d, function (i) {
+                    if (d[i].CodeNo == code) {
+                        var test = true;
+                        var count = -1;
+                        $.each(dd, function (ii) {
+                            if (dd[ii].CodeNo == code) {
+                                test = false;
+                            }
+                            count++;
+                        });
+                        if (test) {
+                            dd.push(d[i]);
+                            if (count > 4) {
+                                dd.shift();
+                            }
+                        }
+
+                    }
+                });
+                localStorage.setItem("RecentSurahs", JSON.stringify(dd));
+            }
+        }
+
+        function LoadAyatSurahName(code) {
+            $("#divAyatBasmala").css("display", "block");
+            var d = JSON.parse(localStorage.getItem("AllSurahs"));
+            $.each(d, function (i) {
+                if (d[i].CodeNo == code) {
+                    $("#lbAyatSurahName").html(d[i].SurahNameArabic);
+                }
+            });
+            if (code == "1" || code == "9") {
+                $("#divAyatBasmala").css("display", "none");
+            }
+        }
+
+        function ChangeTranslatorFlag(id, f) {
+            if (localStorage.getItem("AllTranslators") != null) {
+                var d = JSON.parse(localStorage.getItem("AllTranslators"));
+                $.each(d, function (i) {
+                    if (d[i].Id == id) {
+                        if (f == "checked") {
+                            d[i].Flag = "";
+                        } else {
+                            d[i].Flag = "checked";
+                        }
+                    }
+                })
+                localStorage.setItem("AllTranslators", JSON.stringify(d));
+                ViewTranslators();
+                ViewTranslation();
+            }
+        }
+        function ViewTranslation() {
+            if (localStorage.getItem("AllTranslators") != null) {
+                var d = JSON.parse(localStorage.getItem("AllTranslators"));
+                // console.log('AllTranslators ViewTranslation ' + JSON.stringify(d));
+                $.each(d, function (i) {
+                    var id = d[i].Id;
+                    if (d[i].Flag == "checked") {
+                        $(".trans" + id).css("display", "block");
+                    } else {
+                        $(".trans" + id).css("display", "none");
+                    }
+                })
+            }
+        }
+        function ViewTranslators() {
+            if (localStorage.getItem("AllTranslators") != null) {
+                var d = JSON.parse(localStorage.getItem("AllTranslators"));
+                //console.log('AllTranslators 3 ' + JSON.stringify(d));
+                var html = "<label class='form-check - label' > Translators </label >";
+
+                $.each(d, function (i) {
+                    html += "  <div class='form-check'>\
+                                                                                                                                        <input class='form-check-input' type = 'checkbox' value = '' id = 'chkTranslators" + d[i].Id + "' " + d[i].Flag + " onchange='ChangeTranslatorFlag(" + d[i].Id + ",\"" + d[i].Flag + "\")'>\
+                                                                                                                                            <label class='form-check-label' for='chkTranslators" + d[i].Id + "'>\
+                                                                                                                                               " + d[i].TranslatorsName + "\
+                                                                                                                                            </label>\
+                                                                                                                            </div >" ;
+                    i = i + 1;
+                });
+
+                $("#divMenuTranslators").html(html);
+            }
+        }
+        function LoadTranslators() {
+            var d = [{ "Id": 3, "TranslatorsName": "Dr AQM Mahboobullah (Bn) (Bangla)", "Flag": "checked" }];
+            localStorage.setItem("AllTranslators", JSON.stringify(d));
+            ViewTranslators();
+        }
+        function LoadSurahs() {
+            $("#divSurah").css("display", "block");
+
+            var d = allSurahNameData;
+            localStorage.setItem("AllSurahs", JSON.stringify(allSurahNameData));
+            // console.log('LoadSurahs  ' + JSON.stringify(d));
+            var langId = localStorage.getItem("SurahLanguage");
+            if ($("#divIndAyat1_1").length > 0) {
+                console.log('LoadSurahs return ');
+                return;
+            }
+            var html = "";
+            $.each(d, function (i) {
+                html += " <div class='col-lg-4' onclick='LoadAyat(\"" + d[i].CodeNo + "\")'>\
+                                                                                                            <div class='surah_box'>\
+                                                                                                                <div class='row align-items-center'>\
+                                                                                                                    <div class='col-2'>\
+                                                                                                                        <div class='index_box'>\
+                                                                                                <span class='index_number' style='";
+                if (d[i].CodeNo.toString().length == 1)
+                    html += "margin-left: 10px;";
+                if (d[i].CodeNo.toString().length == 2)
+                    html += "margin-left: 5px;";
+                if (d[i].CodeNo.toString().length == 3)
+                    html += "margin-left: 3px;";
+
+                html += "'>" + d[i].CodeNo + "</span>\
+                                                                                            </div>\
+                                                                                        </div>\
+                                                                                        <div class='col-6'>\
+                                                                                            <div class='surah_name'>\
+                                                                                                ";
+
+
+                var wordDataHtml1 = "";
+                var wordDataHtml2 = "";
+                var ld = d[i].NameTranslate;
+                // console.log('NameTranslate  ' + JSON.stringify(ld));
+                $.each(ld, function (ii) {
+                    wordDataHtml1 += "  data-l" + ld[ii].LanguageId + "sn='" + ld[ii].SurahName + "'";
+                    wordDataHtml2 += " data-l" + ld[ii].LanguageId + "st = '" + ld[ii].SurahTranslation + "'";
+
+                })
+                html += " <h3 class='dark_text_color tsn' " + wordDataHtml1 + ">" + ld[0].SurahName + "</h3>\
+                                                                                                        <h6 class='tst' "+ wordDataHtml2 + ">" + ld[0].SurahTranslation + "</h6>";
+
+                html += " </div>\
+                                                                                                                    </div>\
+                                                                                                                    <div class='col-4'>\
+                                                                                                                        <div class='ayahs text-center'>\
+                                                                                                                            <div class='arabic name'>" + d[i].SurahNameArabic + "</div>\
+                                                                                                                            <h6>" + d[i].TotalAyat + " Ayahs</h6>\
+                                                                                                                        </div>\
+                                                                                                                    </div>\
+                                                                                                                </div>\
+                                                                                                            </div>\
+                                                                                                        </div>" ;
+                i = i + 1;
+            });
+            $("#divSurahDetails").html(html);
+
+
+
+            var AllSurahs = JSON.parse(localStorage.getItem("AllSurahs"));
+            var totalAyats = 0;
+            html = "";
+            $.each(AllSurahs, function (i) {
+                totalAyats = parseInt(AllSurahs[i].TotalAyat);
+                for (let count = 1; count <= totalAyats; count++) {
+                    html += "  <div class='details_box' id='divIndAyat" + AllSurahs[i].CodeNo + "_" + count + "' name='divIndAyat" + AllSurahs[i].CodeNo + "_" + count + "'></div>";
+                }
+            })
+            $("#divAyatDetails").html(html);
+            // $(".details_box").css("display", "none");
+
+            LoadAllAyat();
+
+            //DownloadFile($("#divAyatDetails").html());
+        }
+        function DownloadFile(content) {
+            const link = document.createElement("a");
+            // const content = document.querySelector("textarea").value;
+            const file = new Blob([content], { type: 'text/plain' });
+            link.href = URL.createObjectURL(file);
+            link.download = "sample.txt";
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        async function LoadAllAyat() {
+            var d = allAyatdata;
+
+            $.each(d, function (i) {
+                var html = "\
+<div class='d-flex justify-content-between flex-lg-row flex-column'>\
+            <div class='details_icon d-flex flex-lg-column'>\
+                <span class='mb-3'>" + d[i].AyatCode + "</span>\
+                <div class='icon_btn dark_text_color_two' onclick='PlayAudio(\"AudioSurahAyat\",\""+ d[i].AudioName + "\")'>\
+                    <svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>\
+                        <path d='m5 3 14 9-14 9V3Z' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'></path>\
+                    </svg>\
+                </div>\
+                <div class='icon_btn dark_text_color_two'>\
+            <svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>\
+                        <path d='M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.379 8.379 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z' \
+                                stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'></path>\
+                    </svg>\
+                </div>\
+                <div class='icon_btn dark_text_color_two'>\
+                    <svg width='24' height='24' viewBox='0 0 24 24' fill='none'  xmlns='http://www.w3.org/2000/svg'>\
+                        <path d='M10 13a5.001 5.001 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71' stroke='currentColor'  stroke-width='2' stroke-linecap='round' stroke-linejoin='round'></path>\
+                        <path d='M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71' stroke='currentColor'  stroke-width='2' stroke-linecap='round' stroke-linejoin='round'></path>\
+                    </svg>\
+                </div>\
+                <div class='icon_btn dark_text_color_two'>\
+                    <svg width='24' height='24' viewBox='0 0 24 24'  fill='currentColor' xmlns='http://www.w3.org/2000/svg'>\
+                        <path d='M12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM19 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM5 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z'\
+                                stroke='currentColor'  stroke-width='2' stroke-linecap='round' stroke-linejoin='round'></path>\
+                    </svg>\
+                </div>\
+            </div>\
+            <div style='width: 100%;'>\
+<div style='width: 100%;'  dir='rtl'>";
+                var wd = d[i].WordDictionary;
+
+                // console.log('LoadAyat split ' + JSON.stringify(sp));
+                var subHtml = "";
+                $.each(wd, function (ii) {
+                    var wt = wd[ii].WordTranslation;
+                    var wordDataHtml = "";
+                    $.each(wt, function (iii) {
+                        // if (wd[iii].ArabicWord == sp[ii]) {
+                        wordDataHtml += "  data-l" + wt[iii].LanguageId + "wt='" + wt[iii].WordTranslation + "'";
+                        //data - l" + wd[iii].LanguageId + "ws = '" + wd[iii].WordSpelling + "'
+                        // }
+                    })
+                    // console.log('LoadAyat wordDataHtml ' + wordDataHtml);
+                    subHtml += "<div class='ArabicWordBlock' style='display: inline-block;text-align: center;'  onclick='PlayAudio(\"AudioArabicWord\",\"" + wd[ii].AudioFile + "\")'><span " + wordDataHtml + " class='arabic_sentence' style='font-family: AlMuslimeenaBengali' lang='ar-sa' dir='rtl'>" + wd[ii].ArabicWord + "</span>&nbsp;<p class='WordTranslation' " + wordDataHtml + ">&nbsp;</p></div >";
+
+                    //subHtml += "<p class='WordSpelling'"wordDataHtml + ">&nbsp;</p>";
+                })
+                html += subHtml;
+
+
+                var d1 = d[i].Translate;
+                html += " </div>\ <div class='onubad'>";
+                $.each(d1, function (ii) {
+                    // console.log('LoadAyat Translations id ' + d1[ii].Id);
+                    var translations = d1[ii].Translations;
+                    var dl = d1[ii].DescriptionLink;
+                    $.each(dl, function (dlc) {
+                        translations = translations.replace(dl[dlc].TranslationsPart, "<span onmouseover=\"this.style.backgroundColor= 'yellow';\" onmouseout = \"this.style.backgroundColor= 'white';\" onclick='LoadAyatForDescriptionLink(\"" + d[i].AyatCode.split(':')[0] + "\",\"" + dl[dlc].LinkAyatCode + "\")'>" + dl[dlc].TranslationsPart + "</span>")
+                    })
+
+
+                    // console.log('LoadAyat Translations Speak ' + d1[ii].Translations.replace("'", ""));
+                    html += " <div class='bangla trans" + d1[ii].Id + "' onclick='Speak(\"" + d1[ii].Translations.replace(/[&\/\\#,+()$~%.'":*?<>{}]/g, '') + "\")'>\
+                                                                                                                    <h4 class='dark_text_color_two'>\
+                                                                                                                         <i class='bx bx-caret-right icon'></i> &nbsp;  " + translations + "\
+                                                                                                                    </h4>\
+                                                                                                                    <div class='writer_name dark_text_color_two'>\
+                                                                                                                        &nbsp;  &nbsp;   — " + d1[ii].TranslatorsName + "\
+                                                                                                                    </div>\
+                                                                                                                </div> ";
+                })
+
+                html += "</div> </div>  <hr /> ";
+                html += "</div >";
+                $("#divIndAyat" + d[i].AyatCode.replace(':', '_')).html(html);
+                i = i + 1;
+                // console.log(html);
+
+            });
+
+
+
+        }
+
+        function LoadAyatByCode(code) {
+
+            $("#divIndAyat" + code.replace(':', '_')).css("display", "block");
+            ViewTranslation();
+
+            ChangeWordByWord();
+
+        }
+        function LoadAyatForDescriptionLink(surahcode, code) {
+            $(".details_box").css("display", "none");
+            localStorage.setItem("BackPage", "quran*Surah*" + surahcode);
+            var linkCode = code.split(",");
+            CloseAllPage();
+            $("#divAyat").css("display", "block");
+
+            $("#divAyatBasmala").css("display", "none");
+            $("#lbAyatSurahName").html('Ayat  Description  Link');
+            var totalAyats = linkCode.length;
+
+            //var html = "";
+            //for (let count = 0; count < totalAyats; count++) {
+            //    html += "  <div class='details_box' id='divIndAyat" + linkCode[count].replace(':', '_').replace(' ', '') + "' name='divIndAyat" + linkCode[count].replace(':', '_').replace(' ', '') + "'></div>";
+            //}
+            //$("#divAyatDetails").html(html);
+            for (let count = 0; count < totalAyats; count++) {
+                LoadAyatByCode(linkCode[count].replace(' ', ''));
+            }
+        }
+        function LoadAyat(code) {
+            $(".details_box").css("display", "none");
+            SetRecentSurahs(code);
+            CloseAllPage();
+            $("#divAyat").css("display", "block");
+            LoadAyatSurahName(code);
+            var AllSurahs = JSON.parse(localStorage.getItem("AllSurahs"));
+            var totalAyats = 0;
+            $.each(AllSurahs, function (i) {
+                if (AllSurahs[i].CodeNo == code)
+                    totalAyats = parseInt(AllSurahs[i].TotalAyat);
+            })
+
+            for (let count = 1; count <= totalAyats; count++) {
+                $("#divIndAyat" + code + "_" + count).css("display", "block");
+            }
+        }
+        function ChangeWordByWord() {
+            var langId = localStorage.getItem("SurahLanguage");
+            if ($('#chkWordTranslation').is(':checked')) {
+                $('.WordTranslation').each(function () {
+                    var data = $(this).data("l" + langId + "wt");
+                    // console.log('data---' + data);
+                    if (data != null) {
+                        if (data.toString().length > 0)
+                            $(this).html(data + "&nbsp; ");
+                    } else {
+                        $(this).html(' ');
+                    }
+                });
+            } else {
+                $('.WordTranslation').each(function () {
+                    $(this).html(' ');
+                });
+            }
+
+        }
+
+        function LoadAyatSearch() {
+
+            CloseAllPage();
+            $("#divAyat").css("display", "block");
+            $("#divAyatBasmala").css("display", "none");
+            $("#lbAyatSurahName").html('Search Result');
+            var urlLink = '../api/Common/LoadAyatSearch';
+            var data =
+            {
+                SearchText: $("#txtSearch").val()
+            }
+            $.ajax(
+                {
+                    url: urlLink,
+                    type: "Post",
+                    data: JSON.stringify(data),
+                    dataType: "JSON",
+                    contentType: "application/json",
+                    async: false,
+                    success: function (dd) {
+                        var d = dd.data;
+                        // console.log('LoadAyatSearch  ' + JSON.stringify(d));
+                        // var html = "";
+
+                        $.each(d, function (i) {
+                            $("#divIndAyat" + d[i].AyatCode.replace(':', '_')).css("display", "block");
+
+                            i = i + 1;
+                            // console.log(html);
+                        });
+                        // $("#divAyatDetails").html(html);
+
+                        ViewTranslation();
+
+                        ChangeWordByWord();
+                    },
+                    error: function () {
+                        alert('Error! Please Try again');
+                    }
+                });
+
+        }
+        function PlayAudio(dir, file) {
+            if (file.length > 0) {
+                $("#audioPlayer").attr('src', 'https://www.quranrt.com/UploadFiles/' + dir + '/' + file);
+                document.getElementById('audioPlayer').play();
+                //$("#audioPlayer").play();
+            }
+        }
+        function LoadBackPage() {
+            var BackPage = localStorage.getItem("BackPage");
+            if (BackPage.length > 0) {
+                var code = BackPage.split('*')[2];
+                LoadAyat(code);
+                localStorage.setItem("BackPage", "");
+            } else {
+                // location.reload();
+                $("#divAyat").css("display", "none");
+                LoadSurahs();
+            }
+        }
+    </script>
+</head>
+<body class="container-fluid p-0">
+    <nav id="sidebar" class="sidebar close">
+        <header>
+            <div class="image-text" onclick="location.reload();">
+                <span class="image">
+                    <img src="img/logo.png" />
+                </span>
+
+                <div class="text logo-text">
+                    <span class="name">Quran</span>
+                    <span class="profession">Real Translation</span>
+                </div>
+            </div>
+
+            <i class="bx bx-chevron-right toggle"></i>
+        </header>
+
+        <div class="menu-bar">
+            <div class="menu">
+
+                <!--<li class="search-box">
+                    <i class="bx bx-search icon"></i>
+                    <input type="text" placeholder="Search..." />
+                </li>-->
+                <div id="divMenuTbl" style="margin: 5px; display:none;background-color:none;">
+                    <table id="menuSurah" class="display nowrap table" style="width:100%;">
+                        <thead>
+                            <tr>
+                                <th class="dark">SL</th>
+                                <th>Name</th>
+                                <!--<th>Juz No</th>
+                                <th>Page No</th>-->
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+                <div id="divMenuTranslators" style="margin: 5px; display:none;background-color:none;">
+                    <label class="form-check-label">
+                        Translators
+                    </label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="flexCheckChecked" checked onchange="ChangeTranslatoerFlag()">
+                        <label class="form-check-label" for="flexCheckChecked">
+                            Checked checkbox
+                        </label>
+                    </div>
+                </div>
+                <ul class="menu-links">
+                    <!--<li class="nav-link">
+                        <a href="#" onclick="location.reload();">
+                            <i class="bx bx-home-alt icon"></i>
+                            <span class="text nav-text">Dashboard</span>
+                        </a>
+                    </li>-->
+
+                    <li class="nav-link">
+                        <a href="#" onclick="localStorage.clear();location.reload();">
+                            <i class="bx bx-trash icon"></i>
+                            <span class="text nav-text">Clear Cache </span>
+                        </a>
+                    </li>
+
+                    <li class="nav-link">
+                        <a href="#divMainSearch">
+                            <i class="bx bx-chevrons-up icon"></i>
+                            <span class="text nav-text">Page Top</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-link">
+                        <a href="#divPageFooter">
+                            <i class="bx bx-chevrons-down icon"></i>
+                            <span class="text nav-text">Page End</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-link">
+                        <a href="#">
+                            <div class="form-check form-switch" style="padding-left:55px;">
+                                <input class="form-check-input" type="checkbox" role="switch" id="chkWordTranslation" checked onchange="ChangeWordByWord()">
+                                <label class="form-check-label text nav-text" for="chkWordTranslation">Word Translation</label>
+                            </div>
+                        </a>
+                    </li>
+
+
+                </ul>
+
+            </div>
+
+            <div class="bottom-content">
+                <li class="">
+                    <a href="login/index.html">
+                        <i class="bx bx-log-in icon"></i>
+                        <span class="text nav-text">LogIn</span>
+                    </a>
+                </li>
+
+                <li class="mode">
+                    <div class="sun-moon">
+                        <i class="bx bx-moon icon moon"></i>
+                        <i class="bx bx-sun icon sun"></i>
+                    </div>
+                    <span class="mode-text text">Dark mode</span>
+
+                    <div class="toggle-switch">
+                        <span class="switch"></span>
+                    </div>
+                </li>
+            </div>
+        </div>
+    </nav>
+
+    <section id="secHome" class="home">
+        <!--<div class="text">Dashboard Sidebar</div>-->
+        <!-- hero -->
+        <div class="hero" id="divMainSearch">
+            <div class="container">
+                <div class="text-center">
+                    <!--<img src="./img/hero-img2.svg"
+                    class="img-fluid w-25 hero_img"
+                    alt="" />-->
+                    <span class="dark_text_color rounded-pill shadow" style="font-family: AlMuslimeenaBengali; font-size: 6vw; text-align: center; padding: 20px; ">اِنَّہٗ لَقُرۡاٰنٌ کَرِیۡمٌ</span>
+                </div>
+                <div>
+                    <div class="input-group mb-3 ui-widget">
+                        <span class="input-group-text" onclick="LoadAyatSearch()">
+                            <img src="./img/search-icon.svg" alt="" />
+                        </span>
+                        <input type="text" class="form-select" id="txtSearch" name="txtSearch" placeholder="" />
+
+
+                        <span class="input-group-text" onclick="ClearSearch()">
+                            <!--<img src="./img/microphone.svg" alt="" />-->
+                            ❌
+                        </span>
+
+                    </div>
+
+                    <div class="text-center many_btn">
+                        <a class="btn hero_btn" onclick="LoadAyat('67')">Al Mulk</a>
+                        <a class="btn hero_btn" onclick="LoadAyat(36)">Yaseen</a>
+                        <!--<a class="btn hero_btn" onclick="LoadAyat(114)">An-Nas</a>-->
+                        <a class="btn hero_btn" onclick="LoadAyat(18)">Al Kahf</a>
+                        <a class="btn hero_btn" onclick="LoadAyat(12)">Yusuf</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <!-- !hero -->
+        <div class="surah dark_text_color">
+            <div class="btn-group" id="divChkLanguage" style="width:100%; padding-bottom:10px; ">
+                <!--<button>Bangla</button>
+                <button>Samsung</button>
+                <button>Sony</button>-->
+            </div>
+        </div>
+        <!-- Recently Read -->
+        <div class="recent" id="divRecent">
+            <div class="container">
+                <div class="title dark_text_color_two">Recently Read</div>
+                <div class="row" id="divRecentDetails">
+                    <!--<div class="col-lg-3">
+                        <div class="read_box">
+                            <div class="d-flex justify-content-between">
+                                <h6 class="dark_text_color_two">The Sovereignty</h6>
+                                <h5 class="dark_text_color_two">67</h5>
+                            </div>
+                            <h5 class="dark_text_color">
+                                Surah <br />
+                                Al-Mulk
+                            </h5>
+                            <div class="ayah">
+                                <div class="surah_name">الملك</div>
+                                <p>Ayah 1</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-3">
+                        <div class="read_box">
+                            <div class="d-flex justify-content-between">
+                                <h6 class="dark_text_color_two">The Sovereignty</h6>
+                                <h5 class="dark_text_color_two">67</h5>
+                            </div>
+                            <h5 class="dark_text_color">
+                                Surah <br />
+                                Al-Mulk
+                            </h5>
+                            <div class="ayah">
+                                <div class="surah_name">الملك</div>
+                                <p>Ayah 1</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-3">
+                        <div class="read_box">
+                            <div class="d-flex justify-content-between">
+                                <h6 class="dark_text_color_two">The Sovereignty</h6>
+                                <h5 class="dark_text_color_two">67</h5>
+                            </div>
+                            <h5 class="dark_text_color">
+                                Surah <br />
+                                Al-Mulk
+                            </h5>
+                            <div class="ayah">
+                                <div class="surah_name">الملك</div>
+                                <p>Ayah 1</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-3">
+                        <div class="read_box">
+                            <div class="d-flex justify-content-between">
+                                <h6 class="dark_text_color_two">The Sovereignty</h6>
+                                <h5 class="dark_text_color_two">67</h5>
+                            </div>
+                            <h5 class="dark_text_color">
+                                Surah <br />
+                                Al-Mulk
+                            </h5>
+                            <div class="ayah">
+                                <div class="surah_name">الملك</div>
+                                <p>Ayah 1</p>
+                            </div>
+                        </div>
+                    </div>-->
+                </div>
+            </div>
+        </div>
+        <!-- !Recently Read -->
+        <!-- surah -->
+        <div class="surah dark_text_color" id="divSurah">
+
+            <div class="container">
+                <div class="title dark_text_color_two">Surah</div>
+                <div class="row" id="divSurahDetails">
+                    <!--<div class="col-lg-4" onclick="LoadAyat('')">
+                        <div class="surah_box">
+                            <div class="row align-items-center">
+                                <div class="col-2">
+                                    <div class="index_box">
+                                        <span class="index_number">1</span>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="surah_name">
+                                        <h3 class="dark_text_color">Al-Fatihah</h3>
+                                        <h6>The Operner</h6>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="ayahs text-center">
+                                        <div class="arabic name">الملك</div>
+                                        <h6>7 Ayahs</h6>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>-->
+
+
+                </div>
+            </div>
+        </div>
+        <!-- !surah -->
+        <!-- details -->
+        <div class="details dark_text_color_two" id="divAyat">
+            <div class="details dark_text_color_two" id="divBack" onclick="LoadBackPage()">
+                <div style="text-align: center;padding:10px;">
+                    <span id="lbBack" style="font-size: 70px;">  <i class="bx bx-undo icon"></i> </span>
+                </div>
+                <div style="text-align: center;padding:10px;">
+                    <span id="lbAyatSurahName" style="font-size: 50px; font-family: AlMuslimeenaBengali" lang="ar-sa" dir="rtl">البَقَرَة</span>
+                </div>
+                <div id="divAyatBasmala" style="text-align: center; padding: 10px; display: block;">
+                    <span class="arabic_sentence" style="font-family: AlMuslimeenaBengali;" lang="ar-sa" dir="rtl">بِسۡمِ اللّٰہِ الرَّحۡمٰنِ الرَّحِیۡمِ</span>
+                    <h4 class="dark_text_color_two" style="padding: 8px;">
+                        পরম করুণাময় অশেষ দয়ালু আল্লহ্ তা'আলার নামের সাথে।
+                    </h4>
+                </div>
+            </div>
+            <div class="container">
+
+                <div class="" id="divAyatDetails">
+                    <!--<div class="details_box">
+                        <div class="d-flex justify-content-between flex-lg-row flex-column">
+                            <div class="details_icon d-flex flex-lg-column">
+
+
+                                <div class="icon_btn dark_text_color_two">
+                                    <svg width="24"
+                                         height="24"
+                                         viewBox="0 0 24 24"
+                                         fill="none"
+                                         xmlns="http://www.w3.org/2000/svg">
+                                        <path d="m5 3 14 9-14 9V3Z"
+                                              stroke="currentColor"
+                                              stroke-width="2"
+                                              stroke-linecap="round"
+                                              stroke-linejoin="round"></path>
+                                    </svg>
+                                </div>
+
+                                <div class="icon_btn dark_text_color_two">
+                                    <svg width="24"
+                                         height="24"
+                                         viewBox="0 0 24 24"
+                                         fill="none"
+                                         xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.379 8.379 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z"
+                                              stroke="currentColor"
+                                              stroke-width="2"
+                                              stroke-linecap="round"
+                                              stroke-linejoin="round"></path>
+                                    </svg>
+                                </div>
+
+                                <div class="icon_btn dark_text_color_two">
+                                    <svg width="24"
+                                         height="24"
+                                         viewBox="0 0 24 24"
+                                         fill="none"
+                                         xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M10 13a5.001 5.001 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"
+                                              stroke="currentColor"
+                                              stroke-width="2"
+                                              stroke-linecap="round"
+                                              stroke-linejoin="round"></path>
+                                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
+                                              stroke="currentColor"
+                                              stroke-width="2"
+                                              stroke-linecap="round"
+                                              stroke-linejoin="round"></path>
+                                    </svg>
+                                </div>
+
+                                <div class="icon_btn dark_text_color_two">
+                                    <svg width="24"
+                                         height="24"
+                                         viewBox="0 0 24 24"
+                                         fill="currentColor"
+                                         xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM19 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM5 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+                                              stroke="currentColor"
+                                              stroke-width="2"
+                                              stroke-linecap="round"
+                                              stroke-linejoin="round"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div style="width: 100%;height: 100%;" dir="rtl">
+                            </div>
+                        </div>
+
+                        <div class="onubad">
+                            <div class="english">
+                                <h4 class="dark_text_color_two"></h4>
+                                <div class="writer_name dark_text_color_two">
+
+                                </div>
+                            </div>
+
+                            <div class="bangla">
+                                <h4 class="dark_text_color_two">
+                                </h4>
+                                <div class="writer_name dark_text_color_two">
+
+                                </div>
+                            </div>
+
+                            <div class="azerbijan">
+                                <h4 class="dark_text_color_two"></h4>
+                                <div class="writer_name dark_text_color_two">
+
+                                </div>
+                            </div>
+                        </div>
+                        <hr />
+                    </div>-->
+
+                </div>
+            </div>
+        </div>
+        <!-- !details -->
+        <div id="divPageFooter">
+            <audio controls id="audioPlayer" preload="auto" src="" hidden></audio>
+        </div>
+    </section>
+
+    <script src="js/script.js"></script>
+    <script src="js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
